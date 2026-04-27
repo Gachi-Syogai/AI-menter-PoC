@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Business Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Core palette — obsidian luxury */
+  --bg:      #07080c;
+  --bg2:     #0d0f15;
+  --bg3:     #131620;
+  --bg4:     #191d2a;
+  --border:  rgba(255,255,255,0.055);
+  --border2: rgba(255,255,255,0.10);
+  --border3: rgba(255,255,255,0.16);
+
+  /* Typography */
+  --text:    #eceef4;
+  --text2:   #7c8299;
+  --text3:   #454a60;
+  --text4:   #2e3246;
+
+  /* Accents — warm champagne gold + cool teal */
+  --gold:    #c9a96e;
+  --gold2:   #e8c98a;
+  --gold3:   rgba(201,169,110,0.12);
+  --teal:    #4fd1c5;
+  --teal2:   #81e6d9;
+  --teal3:   rgba(79,209,197,0.10);
+  --red:     #fc5c5c;
+  --red2:    #ff8080;
+  --blue:    #5b9bd5;
+  --orange:  #e8955a;
+  --orange2: rgba(232,149,90,0.12);
+
+  /* Glow */
+  --glow-gold: 0 0 24px rgba(201,169,110,0.18);
+  --glow-teal: 0 0 24px rgba(79,209,197,0.15);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  --font: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(201,169,110,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(79,209,197,0.04) 0%, transparent 55%);
+}
+
+/* ── Noise texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  opacity: 0.4;
+}
+
+.wrap, .header-wrap, .module-panel { position: relative; z-index: 1; }
+
+/* ── Header ── */
+.header-wrap {
+  border-bottom: 1px solid var(--border);
+  background: rgba(7,8,12,0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  position: sticky; top: 0; z-index: 100;
+  padding: 0 2rem;
+}
+.header-inner {
+  max-width: 900px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--gold), rgba(201,169,110,0.6));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; box-shadow: var(--glow-gold);
+}
+.logo-text {
+  font-size: 14px; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--text);
+}
+.badge-m1 {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--gold); background: var(--gold3);
+  border: 1px solid rgba(201,169,110,0.25);
+  padding: 3px 8px; border-radius: 6px; letter-spacing: 0.06em;
+}
+.badge-m2 {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--teal); background: var(--teal3);
+  border: 1px solid rgba(79,209,197,0.2);
+  padding: 3px 8px; border-radius: 6px; letter-spacing: 0.06em;
+}
+
+/* ── Nav tabs ── */
+.nav-tab {
+  padding: 7px 16px; border-radius: var(--r-sm);
+  border: 1px solid transparent; background: transparent;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  color: var(--text3); font-family: var(--font);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  letter-spacing: -0.01em;
+}
+.nav-tab:hover { color: var(--text2); background: var(--bg3); border-color: var(--border); }
+.nav-tab.active { color: var(--text); background: var(--bg3); border-color: var(--border2); }
+
+/* ── Module panels ── */
+.module-panel { display: none; }
+.module-panel.visible { display: block; }
+
+/* ── Wrap ── */
+.wrap { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+
+/* ── Step bar ── */
+.step-bar { display: flex; align-items: center; margin-bottom: 3rem; }
+.sc {
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+  font-family: var(--mono); transition: all 0.3s;
+}
+.sc.done {
+  background: linear-gradient(135deg, var(--teal), rgba(79,209,197,0.7));
+  color: #07080c; box-shadow: var(--glow-teal);
+}
+.sc.active {
+  background: linear-gradient(135deg, var(--gold), rgba(201,169,110,0.8));
+  color: #07080c; box-shadow: var(--glow-gold);
+}
+.sc.idle {
+  background: var(--bg3); color: var(--text4);
+  border: 1px solid var(--border);
+}
+.sl { font-size: 13px; font-weight: 500; color: var(--text3); }
+.sl.active { color: var(--text); }
+.sl.done { color: var(--teal); }
+.step-line { flex: 1; height: 1px; background: var(--border); margin: 0 14px; }
+
+/* ── Section headers ── */
+.sec-title {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.sec-sub { font-size: 13px; color: var(--text3); margin-bottom: 18px; line-height: 1.65; }
+
+/* ── Drop zone ── */
+.dz {
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: var(--r-lg); padding: 2.25rem; text-align: center;
+  cursor: pointer; background: var(--bg2);
+  margin-bottom: 10px; transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  position: relative; overflow: hidden;
+}
+.dz::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(201,169,110,0.06), transparent 70%);
+  opacity: 0; transition: opacity 0.25s;
+}
+.dz:hover { border-color: rgba(201,169,110,0.3); }
+.dz:hover::after { opacity: 1; }
+.dz.active { border-color: var(--teal); background: rgba(79,209,197,0.04); }
+.dz-icon { font-size: 28px; margin-bottom: 10px; }
+.dz-title { font-size: 14px; font-weight: 500; margin-bottom: 5px; color: var(--text); }
+.dz-sub { font-size: 12px; color: var(--text3); }
+
+/* ── Buttons ── */
+.btn {
+  width: 100%; padding: 13px; border-radius: var(--r-md);
+  border: none; font-size: 13px; font-weight: 600;
+  cursor: pointer; margin-bottom: 1.5rem;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  font-family: var(--font); letter-spacing: -0.01em;
+}
+.btn.primary {
+  background: linear-gradient(135deg, var(--gold) 0%, rgba(201,169,110,0.75) 100%);
+  color: #07080c;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.08) inset, var(--glow-gold);
+}
+.btn.primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(201,169,110,0.25); }
+.btn.primary:active { transform: translateY(0); }
+.btn.disabled { background: var(--bg3); color: var(--text4); cursor: not-allowed; border: 1px solid var(--border); }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.4rem 1.6rem;
+  margin-bottom: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+.card-label {
+  font-family: var(--mono); font-size: 9px; font-weight: 500;
+  color: var(--text4); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px;
+}
+
+/* ── Perf grid ── */
+.perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.perf-col-title { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 10px; }
+.perf-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: var(--r-sm); margin-bottom: 4px;
+}
+.perf-rank { font-family: var(--mono); font-size: 11px; font-weight: 500; min-width: 18px; }
+.perf-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.perf-score { font-size: 11px; color: var(--text3); margin-top: 1px; font-family: var(--mono); }
+
+/* ── File list ── */
+.file-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.file-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 8px 14px; font-size: 13px;
+  transition: border-color 0.15s;
+}
+.file-row:hover { border-color: var(--border2); }
+.file-rm {
+  background: none; border: none; cursor: pointer;
+  color: var(--text4); font-size: 16px; transition: color 0.15s;
+}
+.file-rm:hover { color: var(--red2); }
+
+/* ── Upload grid ── */
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.upload-opt {
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  padding: 1.25rem; text-align: center; cursor: pointer;
+  background: var(--bg2); transition: all 0.2s;
+}
+.upload-opt:hover { border-color: rgba(201,169,110,0.3); background: rgba(201,169,110,0.03); transform: translateY(-1px); }
+.upload-opt-icon { font-size: 22px; margin-bottom: 6px; }
+.upload-opt-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; color: var(--text); }
+.upload-opt-sub { font-size: 11px; color: var(--text3); }
+
+/* ── Gmail ── */
+.gmail-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 1.4rem 1.6rem; margin-bottom: 12px; }
+.gmail-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 11px; border-radius: var(--r-md);
+  border: 1px solid var(--border2); background: var(--bg3);
+  font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 8px;
+  color: var(--text); font-family: var(--font); transition: all 0.2s;
+}
+.gmail-btn:hover { border-color: var(--border3); background: var(--bg4); }
+.gmail-connected {
+  font-size: 12px; color: var(--teal2);
+  background: var(--teal3); border: 1px solid rgba(79,209,197,0.15);
+  padding: 8px 14px; border-radius: var(--r-sm); margin-bottom: 10px;
+}
+.gmail-filter { display: flex; gap: 8px; margin-bottom: 8px; }
+.gmail-filter input, .gmail-filter select {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r-sm); color: var(--text); font-size: 12px;
+  padding: 8px 12px; font-family: var(--font);
+}
+.gmail-filter input { flex: 1; }
+.gmail-filter input:focus, .gmail-filter select:focus { outline: none; border-color: var(--gold); }
+.gmail-status { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+/* ── Stats ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 1.5rem 0; }
+.stat {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 16px; text-align: center;
+  transition: all 0.2s;
+}
+.stat:hover { border-color: var(--border2); transform: translateY(-1px); }
+.stat-n { font-family: var(--mono); font-size: 28px; font-weight: 500; margin-bottom: 4px; letter-spacing: -0.02em; }
+.stat-l { font-size: 11px; color: var(--text3); font-weight: 500; letter-spacing: 0.02em; }
+
+/* ── Tabs ── */
+.tab-bar {
+  display: flex; gap: 4px; margin-bottom: 1.5rem;
+  flex-wrap: wrap; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border); padding-bottom: 1rem;
+}
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab {
+  padding: 6px 14px; border-radius: var(--r-sm);
+  border: 1px solid transparent; background: transparent;
+  font-size: 13px; cursor: pointer; color: var(--text3);
+  font-family: var(--font); font-weight: 500;
+  transition: all 0.15s; letter-spacing: -0.01em;
+}
+.tab:hover { color: var(--text2); background: var(--bg3); }
+.tab.active { color: var(--text); background: var(--bg3); border-color: var(--border2); }
+.pdf-btn {
+  padding: 8px 16px; border-radius: var(--r-sm);
+  border: 1px solid var(--border2); background: transparent;
+  font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  color: var(--text2); font-family: var(--font);
+  transition: all 0.15s; letter-spacing: -0.01em;
+}
+.pdf-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--border3); }
+
+/* ── Items ── */
+.item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.item:hover { border-color: var(--border2); }
+.item-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--text); letter-spacing: -0.01em; }
+.item-desc { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 8px; }
+
+/* ── Badges ── */
+.badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; display: inline-block; font-family: var(--mono); letter-spacing: 0.04em; }
+.bg { background: rgba(79,209,197,0.1); color: var(--teal2); border: 1px solid rgba(79,209,197,0.2); }
+.br { background: rgba(252,92,92,0.1); color: var(--red2); border: 1px solid rgba(252,92,92,0.18); }
+.bo { background: var(--orange2); color: var(--orange); border: 1px solid rgba(232,149,90,0.25); }
+.bb { background: rgba(91,155,213,0.1); color: #93c5fd; border: 1px solid rgba(91,155,213,0.2); }
+.risk { font-size: 12px; color: var(--red2); margin-top: 6px; }
+
+/* ── Error ── */
+.err {
+  background: rgba(252,92,92,0.07); border: 1px solid rgba(252,92,92,0.18);
+  border-radius: var(--r-md); padding: 12px 18px; color: var(--red2);
+  font-size: 13px; margin-bottom: 1rem; line-height: 1.6;
+}
+
+/* ── Summary card ── */
+.summary-card {
+  background: linear-gradient(135deg, rgba(201,169,110,0.05), rgba(79,209,197,0.03));
+  border: 1px solid rgba(201,169,110,0.15);
+  border-radius: var(--r-lg); padding: 1.6rem; margin-bottom: 12px;
+}
+.summary-text { font-size: 14px; line-height: 1.8; color: var(--text2); }
+
+/* ── Reset btn ── */
+.reset-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 4px 12px; font-size: 11px;
+  cursor: pointer; color: var(--text3); font-family: var(--font);
+  transition: all 0.15s;
+}
+.reset-btn:hover { border-color: var(--border2); color: var(--text2); }
+.sum-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+
+/* ── Module 2 specific ── */
+.category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.category-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 1rem 1.25rem; transition: all 0.2s; }
+.category-card:hover { border-color: var(--border2); }
+.category-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.category-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.category-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.category-files { display: flex; flex-direction: column; gap: 4px; }
+.category-file { font-size: 12px; color: var(--text2); padding: 4px 8px; background: var(--bg3); border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+.uncategorized-list { display: flex; flex-direction: column; gap: 8px; }
+.uncat-item { background: var(--bg2); border: 1px solid rgba(252,92,92,0.12); border-radius: var(--r-md); padding: 14px 18px; }
+.uncat-name { font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.uncat-suggest { font-size: 12px; color: var(--text3); margin-bottom: 8px; line-height: 1.6; }
+.uncat-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.assign-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; font-size: 11px; cursor: pointer; color: var(--text2); font-family: var(--font); transition: all 0.15s; }
+.assign-btn:hover { background: var(--bg3); color: var(--text); }
+.assign-btn.suggested { border-color: var(--orange); color: var(--orange); }
+.search-bar { display: flex; gap: 8px; margin-bottom: 1rem; }
+.search-input { flex: 1; padding: 11px 14px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 13px; font-family: var(--font); outline: none; transition: border-color 0.15s; }
+.search-input:focus { border-color: var(--gold); }
+.search-btn { padding: 11px 22px; border-radius: var(--r-md); border: none; background: linear-gradient(135deg, var(--gold), rgba(201,169,110,0.75)); color: #07080c; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: all 0.2s; }
+.search-btn:hover { transform: translateY(-1px); box-shadow: var(--glow-gold); }
+.similar-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 10px; transition: border-color 0.2s; }
+.similar-card:hover { border-color: rgba(201,169,110,0.3); }
+.similar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.similar-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.similar-score { font-size: 12px; font-weight: 700; color: var(--gold); font-family: var(--mono); }
+.similar-category { font-size: 11px; color: var(--text3); margin-bottom: 6px; font-family: var(--mono); }
+.similar-reason { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+/* ── PDF area ── */
+#pdf-area { position: fixed; left: -9999px; top: 0; width: 794px; background: white; font-family: sans-serif; padding: 48px; color: #1a1a1a; }
+.pa-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.pa-date { font-size: 12px; color: #888; margin-bottom: 28px; }
+.pa-sec { margin-bottom: 24px; }
+.pa-sec-title { font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.06em; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; margin-bottom: 10px; }
+.pa-item { margin-bottom: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid #e0e0e0; background: #f9f9f9; }
+.pa-item.best { border-left: 3px solid #10b981; }
+.pa-item.ng { border-left: 3px solid #ef4444; }
+.pa-item-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.pa-item-desc { font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 3px; }
+.pa-item-ev { font-size: 11px; }
+.pa-perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pa-perf-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; margin-bottom: 4px; font-size: 12px; }
+.pa-insights { font-size: 13px; line-height: 1.8; background: #f5f5f5; border-radius: 8px; padding: 14px; }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card, .item, .stat, .similar-card, .uncat-item {
+  animation: fadeUp 0.35s cubic-bezier(0.4,0,0.2,1) both;
+}
+.card:nth-child(2), .item:nth-child(2), .stat:nth-child(2) { animation-delay: 0.04s; }
+.card:nth-child(3), .item:nth-child(3), .stat:nth-child(3) { animation-delay: 0.08s; }
+.card:nth-child(4), .item:nth-child(4), .stat:nth-child(4) { animation-delay: 0.12s; }
+</style>
+</head>
+<body>
+<div class="header-wrap">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">&#129504;</div>
+      <span class="logo-text">AI Business Platform</span>
+      <span id="mod-badge" class="badge-m1">Module 1</span>
+    </div>
+    <div style="display:flex;gap:4px">
+      <button id="tab1" class="nav-tab active" onclick="showModule(1)">&#128218; 新人教育 AIメンター</button>
+      <button id="tab2" class="nav-tab" onclick="showModule(2)">&#128194; データ整理・分析</button>
+    </div>
+  </div>
+</div>
+
+<div id="panel1" class="module-panel visible">
+  <div class="wrap"><div id="app"></div></div>
+  <div id="pdf-area"></div>
+</div>
+
+<div id="panel2" class="module-panel">
+  <div class="wrap">
+    <div style="margin-bottom:2rem">
+      <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px">データ整理・分析エンジン</h1>
+      <p style="font-size:13px;color:var(--text3);line-height:1.6">既存のフォルダ構造をAIが学習し、新しいファイルを自動分類します。類似案件の検索にも対応。</p>
+    </div>
+    <div id="app2"></div>
+  </div>
+</div>
+
+<script>
+function showModule(n) {
+  document.getElementById('panel1').classList.remove('visible');
+  document.getElementById('panel2').classList.remove('visible');
+  document.getElementById('tab1').classList.remove('active');
+  document.getElementById('tab2').classList.remove('active');
+  document.getElementById('panel' + n).classList.add('visible');
+  document.getElementById('tab' + n).classList.add('active');
+  var badge = document.getElementById('mod-badge');
+  if (n === 1) { badge.textContent = 'Module 1'; badge.className = 'badge-m1'; render(); }
+  else { badge.textContent = 'Module 2'; badge.className = 'badge-m2'; m2render(); }
+}
+
+// ── MODULE 1 ──────────────────────────────────────
+// ── 定数 ──────────────────────────────────────────
+const CLIENT_ID = "452964567694-ic9cc5beu3jt9m0pl1rue7fh61d04cha.apps.googleusercontent.com";
+const SCOPES    = "https://www.googleapis.com/auth/gmail.readonly";
+
+const P1 = `組織分析の専門家として、CSVの成績データから上位5名・下位5名を特定してください。JSONのみ返してください。形式:{"metric_name":"指標名","top5":[{"rank":1,"name":"氏名","score":"値"}],"bottom5":[{"rank":1,"name":"氏名","score":"値"}]}`;
+const P2 = `組織分析の専門家として、成績データとドキュメントを統合分析し、JSONのみ返してください。各配列は3〜7件を目安にAIが適切な数を判断して出力。メールテンプレートはドキュメント内の成績上位者のメール文例を参照し文体・構成・言い回しを分析して新人が使える汎用テンプレートを生成。形式:{"summary":"概要","best_practices":[{"title":"タイトル","description":"説明","evidence":"根拠"}],"ng_practices":[{"title":"タイトル","description":"説明","risk":"リスク"}],"manual_sections":[{"title":"タイトル","content":"内容"}],"email_templates":[{"title":"メールの種類","subject":"件名テンプレート","body":"本文テンプレート（穴埋め形式）","point":"上位者から学んだポイント"}],"insights":"インサイト"}`;
+const P3 = `あなたは営業・ビジネス文書の改善コーチです。【上位者の模範パターン】と【ユーザーの文書】を比較分析し、JSONのみ返してください。形式:{"overall_score":75,"summary":"総合評価コメント","strengths":[{"title":"良い点のタイトル","description":"具体的な説明"}],"improvements":[{"title":"改善点のタイトル","description":"具体的な説明","example":"上位者のパターンを参考にした改善例"}],"rewritten":{"title":"改善後の文書タイトル","content":"上位者の文体・構成を参考に書き直した全文"}}`;
+
+// ── 状態 ──────────────────────────────────────────
+var S = {
+  pf: null, pc: "", pr: null, pa: false,
+  docs: [], da: false,
+  res: null, err: "", tab: "best",
+  pdfLoading: false,
+  gmailToken: null, gmailUser: "", gmailLoading: false,
+  gmailStatus: "", gmailFetching: false,
+  apiKey: localStorage.getItem("ai_mentor_api_key") || "",
+  showApiSetup: !localStorage.getItem("ai_mentor_api_key"),
+  myDocs: [], myAnalyzing: false, myRes: null
+};
+
+// ── ユーティリティ ────────────────────────────────
+function setState(patch) {
+  Object.assign(S, patch);
+  render();
+}
+
+function readFile(file) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result); };
+    reader.readAsText(file, "UTF-8");
+  });
+}
+
+function readExcel(file) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: "array" });
+        var sheet = wb.Sheets[wb.SheetNames[0]];
+        var csv = XLSX.utils.sheet_to_csv(sheet);
+        resolve(csv);
+      } catch(err) {
+        resolve("");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function saveApiKey(key) {
+  localStorage.setItem("ai_mentor_api_key", key);
+  setState({ apiKey: key, showApiSetup: false, err: "" });
+}
+
+async function callAPI(system, userMsg) {
+  var apiKey = S.apiKey || localStorage.getItem("ai_mentor_api_key");
+  if (!apiKey) {
+    setState({ showApiSetup: true });
+    throw new Error("APIキーが設定されていません");
+  }
+  var res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8000,
+      system: system,
+      messages: [{ role: "user", content: userMsg }]
+    })
+  });
+  var data = await res.json();
+  if (data.error) throw new Error(data.error.message || "API error");
+  if (!data.content || !Array.isArray(data.content)) throw new Error("Invalid response: " + JSON.stringify(data));
+  var txt = data.content.map(function(b){ return b.text || ""; }).join("");
+  // JSONブロックを抽出
+  var jsonMatch = txt.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("JSONが見つかりません: " + txt.slice(0, 200));
+  return JSON.parse(jsonMatch[0]);
+}
+
+// ── アクション ────────────────────────────────────
+async function runStep1() {
+  if (!S.pc || S.pa) return;
+  setState({ pa: true, err: "" });
+  try {
+    var pr = await callAPI(P1, "以下の成績データを分析してください:\n\n" + S.pc.slice(0, 6000));
+    setState({ pr: pr, pa: false });
+  } catch(e) {
+    setState({ err: "成績データの分析に失敗しました。CSVの形式を確認してください。エラー: " + e.message, pa: false });
+  }
+}
+
+async function runStep2() {
+  if (!S.docs.length || S.da) return;
+  setState({ da: true, err: "", res: null });
+  try {
+    var docs = S.docs.map(function(f){ return "=== " + f.name + " ===\n" + f.content.slice(0, Math.floor(5000 / S.docs.length)); }).join("\n\n");
+    var perf = "上位5名: " + S.pr.top5.map(function(p){ return p.name; }).join(", ") + "\n下位5名: " + S.pr.bottom5.map(function(p){ return p.name; }).join(", ") + "\n指標: " + S.pr.metric_name;
+    var res = await callAPI(P2, "【成績分析結果】\n" + perf + "\n\n【社内ドキュメント】\n" + docs);
+    setState({ res: res, da: false, tab: "best" });
+  } catch(e) {
+    setState({ err: "ドキュメント分析に失敗しました。エラー: " + e.message, da: false });
+  }
+}
+
+async function runStep3() {
+  if (!S.myDocs.length || S.myAnalyzing || !S.res) return;
+  setState({ myAnalyzing: true, err: "", myRes: null });
+  try {
+    var myContent = S.myDocs.map(function(f){ return "=== " + f.name + " ===\n" + f.content.slice(0, Math.floor(4000 / S.myDocs.length)); }).join("\n\n");
+    var topPatterns = "【上位者の模範パターン】\n";
+    if (S.res.best_practices) topPatterns += "模範行動:\n" + S.res.best_practices.map(function(b){ return "・"+b.title+": "+b.description; }).join("\n") + "\n\n";
+    if (S.res.email_templates) topPatterns += "模範メール:\n" + S.res.email_templates.map(function(e){ return "件名: "+e.subject+"\n"+e.body; }).join("\n\n");
+    var myRes = await callAPI(P3, topPatterns + "\n\n【ユーザーの文書】\n" + myContent);
+    setState({ myRes: myRes, myAnalyzing: false, tab: "compare" });
+  } catch(e) {
+    setState({ err: "比較分析に失敗しました。エラー: " + e.message, myAnalyzing: false });
+  }
+}
+
+async function addFiles(fileList) {
+  var arr = Array.from(fileList).filter(function(f){ return /\.(txt|md|csv)$/i.test(f.name) && !f.name.startsWith("."); });
+  var results = [];
+  for (var i = 0; i < arr.length; i++) {
+    var f = arr[i];
+    var content = await readFile(f);
+    results.push({ name: f.name, size: f.size, path: f.webkitRelativePath || f.name, content: content });
+  }
+  var existing = S.docs.map(function(f){ return f.path || f.name; });
+  var unique = results.filter(function(f){ return !existing.includes(f.path || f.name); });
+  setState({ docs: S.docs.concat(unique), res: null, err: "" });
+}
+
+function connectGmail() {
+  if (S.gmailLoading || S.gmailToken) return;
+  setState({ gmailLoading: true, gmailStatus: "" });
+  try {
+    var client = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: async function(resp) {
+        if (resp.error) { setState({ gmailLoading: false, gmailStatus: "認証エラー: " + resp.error }); return; }
+        try {
+          var r = await fetch("https://www.googleapis.com/gmail/v1/users/me/profile", { headers: { Authorization: "Bearer " + resp.access_token } });
+          var d = await r.json();
+          setState({ gmailToken: resp.access_token, gmailUser: d.emailAddress || "", gmailLoading: false, gmailStatus: "接続済み" });
+        } catch(e) {
+          setState({ gmailToken: resp.access_token, gmailLoading: false, gmailStatus: "接続済み" });
+        }
+      }
+    });
+    client.requestAccessToken();
+  } catch(e) {
+    setState({ gmailLoading: false, gmailStatus: "Google認証ライブラリの読み込みを待っています。少し待ってから再試行してください。" });
+  }
+}
+
+async function fetchGmails() {
+  if (!S.gmailToken || S.gmailFetching) return;
+  var qEl = document.getElementById("gq");
+  var nEl = document.getElementById("gn");
+  var q = qEl ? qEl.value : "";
+  var n = nEl ? parseInt(nEl.value) : 20;
+  setState({ gmailFetching: true, gmailStatus: "メールを取得中..." });
+  try {
+    var url = "https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=" + n + (q ? "&q=" + encodeURIComponent(q) : "");
+    var listRes = await fetch(url, { headers: { Authorization: "Bearer " + S.gmailToken } });
+    var listData = await listRes.json();
+    var messages = listData.messages || [];
+    if (!messages.length) { setState({ gmailFetching: false, gmailStatus: "メールが見つかりませんでした" }); return; }
+    setState({ gmailStatus: messages.length + "件を処理中..." });
+    var emailDocs = [];
+    for (var i = 0; i < Math.min(messages.length, n); i++) {
+      try {
+        var mRes = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages/" + messages[i].id + "?format=full", { headers: { Authorization: "Bearer " + S.gmailToken } });
+        var mData = await mRes.json();
+        var headers = mData.payload && mData.payload.headers ? mData.payload.headers : [];
+        var subject = (headers.find(function(h){ return h.name === "Subject"; }) || {}).value || "(件名なし)";
+        var from    = (headers.find(function(h){ return h.name === "From";    }) || {}).value || "";
+        var date    = (headers.find(function(h){ return h.name === "Date";    }) || {}).value || "";
+        var body    = extractBody(mData.payload);
+        if (body.trim().length < 20) continue;
+        var content = "件名: " + subject + "\n差出人: " + from + "\n日付: " + date + "\n\n" + body;
+        emailDocs.push({ name: "mail_" + messages[i].id.slice(0,8) + ".txt", size: content.length, path: "Gmail/" + subject.slice(0,30), content: content });
+      } catch(e) {}
+    }
+    var existing = S.docs.map(function(f){ return f.path || f.name; });
+    var unique = emailDocs.filter(function(f){ return !existing.includes(f.path || f.name); });
+    setState({ docs: S.docs.concat(unique), gmailFetching: false, gmailStatus: unique.length + "件のメールを取込完了", res: null });
+  } catch(e) {
+    setState({ gmailFetching: false, gmailStatus: "取得失敗。再ログインしてください。", gmailToken: null });
+  }
+}
+
+function extractBody(payload) {
+  if (!payload) return "";
+  if (payload.body && payload.body.data) {
+    try { return atob(payload.body.data.replace(/-/g,"+").replace(/_/g,"/")); } catch(e) { return ""; }
+  }
+  if (payload.parts) {
+    for (var i = 0; i < payload.parts.length; i++) {
+      if (payload.parts[i].mimeType === "text/plain" && payload.parts[i].body && payload.parts[i].body.data) {
+        try { return atob(payload.parts[i].body.data.replace(/-/g,"+").replace(/_/g,"/")); } catch(e) {}
+      }
+    }
+    for (var j = 0; j < payload.parts.length; j++) {
+      var r = extractBody(payload.parts[j]);
+      if (r) return r;
+    }
+  }
+  return "";
+}
+
+async function exportPDF() {
+  if (!S.res || S.pdfLoading) return;
+  setState({ pdfLoading: true });
+  var r = S.res;
+  var pr = S.pr;
+  var now = new Date().toLocaleDateString("ja-JP", { year:"numeric", month:"long", day:"numeric" });
+  document.getElementById("pdf-area").innerHTML = `
+    <p class="pa-title">新人教育マニュアル 分析レポート</p>
+    <p class="pa-date">生成日: ${now} ｜ 指標: ${pr.metric_name} ｜ ドキュメント: ${S.docs.length}件</p>
+    <div class="pa-sec">
+      <p class="pa-sec-title">分析サマリー</p>
+      <p style="font-size:14px;line-height:1.8">${r.summary}</p>
+    </div>
+    <div class="pa-sec">
+      <p class="pa-sec-title">成績データ（${pr.metric_name}）</p>
+      <div class="pa-perf-grid">
+        <div>
+          <p style="font-size:11px;font-weight:600;color:#1D9E75;margin-bottom:8px">成績上位5名</p>
+          ${pr.top5.map(function(p){ return '<div class="pa-perf-row" style="background:#E1F5EE"><span style="color:#1D9E75;font-weight:600;min-width:16px">'+p.rank+'</span><div><div style="font-weight:500">'+p.name+'</div><div style="font-size:11px;color:#666">'+p.score+'</div></div></div>'; }).join("")}
+        </div>
+        <div>
+          <p style="font-size:11px;font-weight:600;color:#E24B4A;margin-bottom:8px">成績下位5名</p>
+          ${pr.bottom5.map(function(p){ return '<div class="pa-perf-row" style="background:#FCEBEB"><span style="color:#E24B4A;font-weight:600;min-width:16px">'+p.rank+'</span><div><div style="font-weight:500">'+p.name+'</div><div style="font-size:11px;color:#666">'+p.score+'</div></div></div>'; }).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="pa-sec">
+      <p class="pa-sec-title">模範行動（${(r.best_practices||[]).length}件）</p>
+      ${(r.best_practices||[]).map(function(b){ return '<div class="pa-item best"><p class="pa-item-title">'+b.title+'</p><p class="pa-item-desc">'+b.description+'</p>'+(b.evidence?'<p class="pa-item-ev" style="color:#0F6E56">根拠: '+b.evidence+'</p>':'')+'</div>'; }).join("")}
+    </div>
+    <div class="pa-sec">
+      <p class="pa-sec-title">NG行動（${(r.ng_practices||[]).length}件）</p>
+      ${(r.ng_practices||[]).map(function(n){ return '<div class="pa-item ng"><p class="pa-item-title">'+n.title+'</p><p class="pa-item-desc">'+n.description+'</p>'+(n.evidence?'<p class="pa-item-ev" style="color:#A32D2D">根拠: '+n.evidence+'</p>':'')+(n.risk?'<p class="pa-item-ev" style="color:#A32D2D">リスク: '+n.risk+'</p>':'')+'</div>'; }).join("")}
+    </div>
+    <div class="pa-sec">
+      <p class="pa-sec-title">マニュアル（${(r.manual_sections||[]).length}セクション）</p>
+      ${(r.manual_sections||[]).map(function(s,i){ return '<div class="pa-item"><p class="pa-item-title">'+(i+1)+'. '+s.title+'</p><p class="pa-item-desc">'+s.content+'</p></div>'; }).join("")}
+    </div>
+    <div class="pa-sec">
+      <p class="pa-sec-title">組織改善インサイト</p>
+      <p class="pa-insights">${r.insights}</p>
+    </div>
+    <div style="margin-top:40px;padding-top:14px;border-top:1px solid #e0ded8;font-size:11px;color:#aaa;display:flex;justify-content:space-between">
+      <span>過去データ活用型 新人教育AIメンター</span><span>${now}</span>
+    </div>`;
+  try {
+    var canvas = await html2canvas(document.getElementById("pdf-area"), { scale: 2, backgroundColor: "#fff" });
+    var img = canvas.toDataURL("image/png");
+    var pdf = new window.jspdf.jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
+    var pw = pdf.internal.pageSize.getWidth();
+    var ph = pdf.internal.pageSize.getHeight();
+    var iw = canvas.width / 2;
+    var ih = canvas.height / 2;
+    var ratio = pw / iw;
+    var sh = ih * ratio;
+    var y = 0;
+    while (y < sh) {
+      if (y > 0) pdf.addPage();
+      pdf.addImage(img, "PNG", 0, -(y / ratio) * 2 * ratio / 2, pw, sh, undefined, "FAST");
+      y += ph;
+    }
+    pdf.save("AIメンター分析レポート_" + now + ".pdf");
+  } catch(e) {
+    setState({ err: "PDF生成に失敗しました: " + e.message });
+  }
+  document.getElementById("pdf-area").innerHTML = "";
+  setState({ pdfLoading: false });
+}
+
+// ── 描画 ──────────────────────────────────────────
+function render() {
+  var app = document.getElementById("app");
+  app.innerHTML = "";
+
+  // ── オンボーディング画面 ──────────────────────────
+  if (S.showApiSetup) {
+    var ob = document.createElement("div"); ob.style.cssText = "max-width:480px;margin:4rem auto;text-align:center";
+    var obIcon = document.createElement("div"); obIcon.style.cssText = "font-size:48px;margin-bottom:1.5rem"; obIcon.textContent = "🔑";
+    var obTitle = document.createElement("h2"); obTitle.style.cssText = "font-size:22px;font-weight:700;margin-bottom:8px;letter-spacing:-0.02em"; obTitle.textContent = "APIキーを設定してください";
+    var obSub = document.createElement("p"); obSub.style.cssText = "font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:2rem"; obSub.textContent = "本サービスのご利用にはAnthropicのAPIキーが必要です。キーはあなたのブラウザ内にのみ保存され、外部には送信されません。";
+    var obLink = document.createElement("a"); obLink.href = "https://console.anthropic.com"; obLink.target = "_blank"; obLink.style.cssText = "display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent2);text-decoration:none;margin-bottom:1.5rem;padding:8px 16px;border:1px solid rgba(99,102,241,0.2);border-radius:8px;background:rgba(99,102,241,0.06)"; obLink.textContent = "↗ console.anthropic.com でAPIキーを取得";
+    var obInput = document.createElement("input"); obInput.type = "password"; obInput.placeholder = "sk-ant-api03-..."; obInput.id = "apiKeyInput";
+    obInput.style.cssText = "width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;margin-bottom:10px;outline:none";
+    obInput.value = S.apiKey || "";
+    var obBtn = document.createElement("button"); obBtn.className = "btn primary"; obBtn.style.marginBottom = "0"; obBtn.textContent = "設定して始める";
+    obBtn.onclick = function() {
+      var key = document.getElementById("apiKeyInput").value.trim();
+      if (!key.startsWith("sk-ant-")) { setState({ err: "正しいAPIキーを入力してください（sk-ant-...）" }); return; }
+      saveApiKey(key);
+    };
+    if (S.err) { var obErr = document.createElement("p"); obErr.style.cssText = "font-size:12px;color:var(--red2);margin-top:8px"; obErr.textContent = S.err; ob.appendChild(obIcon); ob.appendChild(obTitle); ob.appendChild(obSub); ob.appendChild(obLink); ob.appendChild(obInput); ob.appendChild(obBtn); ob.appendChild(obErr); }
+    else { ob.appendChild(obIcon); ob.appendChild(obTitle); ob.appendChild(obSub); ob.appendChild(obLink); ob.appendChild(obInput); ob.appendChild(obBtn); }
+
+    // API key reset link at bottom
+    if (S.apiKey) {
+      var resetLink = document.createElement("p"); resetLink.style.cssText = "font-size:12px;color:var(--text3);margin-top:1rem;cursor:pointer";
+      resetLink.textContent = "← 戻る"; resetLink.onclick = function() { setState({ showApiSetup: false }); };
+      ob.appendChild(resetLink);
+    }
+    app.appendChild(ob);
+    return;
+  }
+
+  // API key reset button in header area
+  var headerExtra = document.createElement("div"); headerExtra.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:1.5rem";
+  var resetApiBtn = document.createElement("button"); resetApiBtn.style.cssText = "background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text3);font-family:inherit;transition:all 0.15s"; resetApiBtn.textContent = "🔑 APIキー変更"; resetApiBtn.onclick = function() { setState({ showApiSetup: true }); };
+  headerExtra.appendChild(resetApiBtn); app.appendChild(headerExtra);
+
+  // ステップバー
+  var s1done = !!S.pr, s2done = !!S.res;
+  var sb = document.createElement("div"); sb.className = "step-bar";
+  function mkC(n, done, active) {
+    var c = document.createElement("div");
+    c.className = "sc " + (done ? "done" : active ? "active" : "idle");
+    c.textContent = done ? "✓" : String(n);
+    return c;
+  }
+  function mkL(t, active) {
+    var l = document.createElement("span");
+    l.className = "sl" + (active ? " active" : "");
+    l.textContent = t;
+    return l;
+  }
+  sb.appendChild(mkC(1, s1done, !s1done));
+  sb.appendChild(mkL("成績データ", !s1done));
+  var line = document.createElement("div"); line.className = "step-line";
+  sb.appendChild(line);
+  sb.appendChild(mkC(2, s2done, s1done && !s2done));
+  sb.appendChild(mkL("ドキュメント", s1done && !s2done));
+  app.appendChild(sb);
+
+  // エラー
+  if (S.err) {
+    var eb = document.createElement("div"); eb.className = "err"; eb.textContent = S.err;
+    app.appendChild(eb);
+  }
+
+  // ─── STEP 1 ───────────────────────────────────
+  var t1 = document.createElement("p"); t1.className = "sec-title"; t1.textContent = "Step 1 — 成績データのアップロード"; app.appendChild(t1);
+  var s1 = document.createElement("p"); s1.className = "sec-sub"; s1.textContent = "氏名・成績スコアが入ったCSVをアップロード。AIがトップ5・ワースト5を自動抽出します。"; app.appendChild(s1);
+
+  if (!S.pr) {
+    // ファイル入力
+    var perfInput = document.createElement("input");
+    perfInput.type = "file";
+    perfInput.accept = ".csv,.txt,.xlsx,.xls";
+    perfInput.style.display = "none";
+    perfInput.id = "perfInput";
+    document.body.appendChild(perfInput);
+
+    perfInput.onchange = async function(e) {
+      var f = e.target.files[0];
+      if (!f) return;
+      var c;
+      if (/\.xlsx?$/i.test(f.name)) {
+        c = await readExcel(f);
+      } else {
+        c = await readFile(f);
+      }
+      setState({ pf: f, pc: c, err: "" });
+    };
+
+    var dz = document.createElement("div");
+    dz.className = "dz" + (S.pf ? " active" : "");
+    dz.innerHTML = '<div class="dz-icon">📊</div>' +
+      '<div class="dz-title">' + (S.pf ? S.pf.name : "成績データをアップロード") + '</div>' +
+      '<div class="dz-sub">' + (S.pf ? (S.pf.size/1024).toFixed(1)+" KB" : ".xlsx / .csv 対応") + '</div>';
+    dz.onclick = function() { perfInput.click(); };
+    app.appendChild(dz);
+
+    var b1 = document.createElement("button");
+    b1.className = "btn " + (S.pf && !S.pa ? "primary" : "disabled");
+    b1.textContent = S.pa ? "分析中..." : "トップ5・ワースト5を抽出する";
+    if (S.pf && !S.pa) b1.onclick = runStep1;
+    app.appendChild(b1);
+
+  } else {
+    // 成績結果カード
+    var pr = S.pr;
+    var c1 = document.createElement("div"); c1.className = "card";
+    var topRow = document.createElement("div"); topRow.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:10px";
+    var ml = document.createElement("p"); ml.className = "card-label"; ml.style.marginBottom = "0"; ml.textContent = "指標: " + pr.metric_name;
+    var rb = document.createElement("button"); rb.className = "reset-btn"; rb.textContent = "やり直す";
+    rb.onclick = function() { setState({ pf:null, pc:"", pr:null, docs:[], res:null, err:"" }); };
+    topRow.appendChild(ml); topRow.appendChild(rb); c1.appendChild(topRow);
+    var pg = document.createElement("div"); pg.className = "perf-grid";
+    [["成績上位5名", pr.top5, "var(--teal2)", "rgba(79,209,197,0.06)"], ["成績下位5名", pr.bottom5, "var(--red2)", "rgba(252,92,92,0.06)"]].forEach(function(item) {
+      var lbl = item[0], data = item[1], col = item[2], bg = item[3];
+      var col_ = document.createElement("div");
+      var ct = document.createElement("p"); ct.className = "perf-col-title"; ct.style.color = col; ct.textContent = lbl; col_.appendChild(ct);
+      data.forEach(function(p) {
+        var row = document.createElement("div"); row.className = "perf-row"; row.style.background = bg;
+        var rk = document.createElement("span"); rk.className = "perf-rank"; rk.style.color = col; rk.textContent = String(p.rank);
+        var info = document.createElement("div");
+        var nm = document.createElement("p"); nm.className = "perf-name"; nm.textContent = p.name;
+        var sc = document.createElement("p"); sc.className = "perf-score"; sc.textContent = p.score;
+        info.appendChild(nm); info.appendChild(sc);
+        row.appendChild(rk); row.appendChild(info); col_.appendChild(row);
+      });
+      pg.appendChild(col_);
+    });
+    c1.appendChild(pg); app.appendChild(c1);
+
+    // ─── STEP 2 ─────────────────────────────────
+    var t2 = document.createElement("p"); t2.className = "sec-title"; t2.textContent = "Step 2 — 社内ドキュメントのアップロード"; app.appendChild(t2);
+    var s2s = document.createElement("p"); s2s.className = "sec-sub"; s2s.textContent = "ファイル・フォルダのアップロード、またはGmailから直接メールを取込できます。"; app.appendChild(s2s);
+
+    // Gmail連携カード
+    var gc = document.createElement("div"); gc.className = "gmail-card";
+    var gl = document.createElement("p"); gl.className = "card-label"; gl.textContent = "Gmail連携（メール自動取込）"; gc.appendChild(gl);
+
+    if (!S.gmailToken) {
+      var gBtn = document.createElement("button"); gBtn.className = "gmail-btn";
+      gBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.91l8.073-6.073C21.69 2.28 24 3.434 24 5.457z"/></svg>';
+      gBtn.innerHTML += S.gmailLoading ? " 接続中..." : " Gmailでログインしてメールを取込む";
+      if (!S.gmailLoading) gBtn.onclick = connectGmail;
+      gc.appendChild(gBtn);
+    } else {
+      var gcon = document.createElement("p"); gcon.className = "gmail-connected"; gcon.textContent = "✓ " + (S.gmailUser || "Gmail") + " に接続済み"; gc.appendChild(gcon);
+      var gf = document.createElement("div"); gf.className = "gmail-filter";
+      var qi = document.createElement("input"); qi.type = "text"; qi.placeholder = "検索条件（例: from:田中 ／空欄で全件）"; qi.id = "gq";
+      var ns = document.createElement("select"); ns.id = "gn";
+      [10,20,50,100].forEach(function(n) { var o = document.createElement("option"); o.value = String(n); o.textContent = "最新"+n+"件"; ns.appendChild(o); });
+      ns.value = "20";
+      gf.appendChild(qi); gf.appendChild(ns); gc.appendChild(gf);
+      var fetchBtn = document.createElement("button"); fetchBtn.className = "gmail-btn";
+      fetchBtn.textContent = S.gmailFetching ? "取込中..." : "メールを取込む →";
+      if (!S.gmailFetching) fetchBtn.onclick = fetchGmails;
+      gc.appendChild(fetchBtn);
+      var disc = document.createElement("button"); disc.style.cssText = "background:none;border:none;cursor:pointer;font-size:11px;color:#888;margin-top:4px";
+      disc.textContent = "連携を解除する"; disc.onclick = function() { setState({ gmailToken:null, gmailUser:"", gmailStatus:"" }); };
+      gc.appendChild(disc);
+    }
+    if (S.gmailStatus) {
+      var gs = document.createElement("p"); gs.className = "gmail-status"; gs.textContent = S.gmailStatus; gc.appendChild(gs);
+    }
+    app.appendChild(gc);
+
+    // ファイル・フォルダアップロード
+    var fileInput = document.createElement("input"); fileInput.type = "file"; fileInput.accept = ".txt,.md,.csv"; fileInput.multiple = true; fileInput.style.display = "none"; fileInput.id = "fileInput";
+    document.body.appendChild(fileInput);
+    fileInput.onchange = async function(e) { await addFiles(e.target.files); e.target.value = ""; };
+
+    var folderInput = document.createElement("input"); folderInput.type = "file"; folderInput.style.display = "none"; folderInput.id = "folderInput";
+    folderInput.setAttribute("webkitdirectory", ""); folderInput.multiple = true;
+    document.body.appendChild(folderInput);
+    folderInput.onchange = async function(e) { await addFiles(e.target.files); e.target.value = ""; };
+
+    var ug = document.createElement("div"); ug.className = "upload-grid";
+    function mkOpt(icon, title, sub, onClick) {
+      var o = document.createElement("div"); o.className = "upload-opt";
+      o.innerHTML = '<div class="upload-opt-icon">'+icon+'</div><div class="upload-opt-title">'+title+'</div><div class="upload-opt-sub">'+sub+'</div>';
+      o.onclick = onClick; return o;
+    }
+    ug.appendChild(mkOpt("📄", "ファイルを選択", ".txt / .md / .csv（複数可）", function() { fileInput.click(); }));
+    ug.appendChild(mkOpt("📁", "フォルダを丸ごと選択", "フォルダ内の対応ファイルを一括取込", function() { folderInput.click(); }));
+    app.appendChild(ug);
+
+    // ドロップゾーン
+    var dz2 = document.createElement("div"); dz2.className = "dz"; dz2.style.marginBottom = "10px";
+    dz2.innerHTML = '<div class="dz-icon">↓</div><div class="dz-title">ここにファイル・フォルダをドロップ</div><div class="dz-sub">.txt / .md / .csv に対応</div>';
+    dz2.ondragover = function(e) { e.preventDefault(); dz2.style.borderColor = "#888"; dz2.style.background = "#fafaf8"; };
+    dz2.ondragleave = function() { dz2.style.borderColor = ""; dz2.style.background = ""; };
+    dz2.ondrop = async function(e) { e.preventDefault(); dz2.style.borderColor = ""; dz2.style.background = ""; await addFiles(e.dataTransfer.files); };
+    app.appendChild(dz2);
+
+    // ファイルリスト
+    if (S.docs.length > 0) {
+      var sumBar = document.createElement("div"); sumBar.className = "sum-bar";
+      var cb = document.createElement("span"); cb.className = "badge bg"; cb.textContent = S.docs.length + "件"; sumBar.appendChild(cb);
+      var st = document.createElement("span"); st.style.cssText = "font-size:12px;color:#888"; st.textContent = "合計 " + (S.docs.reduce(function(s,f){ return s+f.size; },0)/1024).toFixed(1) + " KB"; sumBar.appendChild(st);
+      var clr = document.createElement("button"); clr.style.cssText = "margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:#888"; clr.textContent = "すべて削除";
+      clr.onclick = function() { setState({ docs:[], res:null }); }; sumBar.appendChild(clr);
+      app.appendChild(sumBar);
+      var fl = document.createElement("div"); fl.className = "file-list";
+      S.docs.slice(0, 8).forEach(function(f) {
+        var row = document.createElement("div"); row.className = "file-row";
+        var left = document.createElement("div"); left.style.cssText = "overflow:hidden;flex:1";
+        var sp = document.createElement("span"); sp.textContent = "📄 " + f.name; sp.style.cssText = "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block"; left.appendChild(sp);
+        if (f.path && f.path !== f.name) { var pt = document.createElement("span"); pt.style.cssText = "font-size:11px;color:#888;display:block"; pt.textContent = f.path; left.appendChild(pt); }
+        var rm = document.createElement("button"); rm.className = "file-rm"; rm.textContent = "×";
+        (function(fname){ rm.onclick = function() { setState({ docs: S.docs.filter(function(d){ return (d.path||d.name) !== fname; }), res: null }); }; })(f.path||f.name);
+        row.appendChild(left); row.appendChild(rm); fl.appendChild(row);
+      });
+      if (S.docs.length > 8) { var more = document.createElement("p"); more.style.cssText = "font-size:12px;color:#888;padding:4px 12px"; more.textContent = "...他 " + (S.docs.length-8) + " 件"; fl.appendChild(more); }
+      app.appendChild(fl);
+    }
+
+    var canRun = S.docs.length > 0 && !S.da;
+    var b2 = document.createElement("button"); b2.className = "btn " + (canRun ? "primary" : "disabled");
+    b2.textContent = S.da ? "成績データと紐付けて分析中..." : "成績データと紐付けて分析する" + (S.docs.length > 0 ? " (" + S.docs.length + "件)" : "");
+    if (canRun) b2.onclick = runStep2;
+    app.appendChild(b2);
+  }
+
+  // ─── 分析結果 ────────────────────────────────────
+  if (S.res) {
+    var r = S.res;
+    var sc = document.createElement("div"); sc.className = "summary-card";
+    var smeta = document.createElement("div"); smeta.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px";
+    var slbl = document.createElement("p"); slbl.className = "card-label"; slbl.style.marginBottom = "0"; slbl.textContent = "統合分析サマリー";
+    var sbadge = document.createElement("span"); sbadge.className = "badge bg"; sbadge.textContent = "成績データ連動";
+    smeta.appendChild(slbl); smeta.appendChild(sbadge); sc.appendChild(smeta);
+    var stxt = document.createElement("p"); stxt.className = "summary-text"; stxt.textContent = r.summary; sc.appendChild(stxt);
+    app.appendChild(sc);
+
+    var sg = document.createElement("div"); sg.className = "stats-grid";
+    [["模範行動",(r.best_practices||[]).length,"var(--teal)"],["NG行動",(r.ng_practices||[]).length,"var(--red)"],["マニュアル",(r.manual_sections||[]).length,"var(--blue)"],["メールテンプレ",(r.email_templates||[]).length,"var(--gold)"]].forEach(function(item) {
+      var cd = document.createElement("div"); cd.className = "stat";
+      var n = document.createElement("p"); n.className = "stat-n"; n.style.color = item[2]; n.textContent = String(item[1]);
+      var l = document.createElement("p"); l.className = "stat-l"; l.textContent = item[0];
+      cd.appendChild(n); cd.appendChild(l); sg.appendChild(cd);
+    });
+    app.appendChild(sg);
+
+    var tb = document.createElement("div"); tb.className = "tab-bar";
+    var tabs = document.createElement("div"); tabs.className = "tabs";
+    [["best","模範行動"],["ng","NG行動"],["manual","マニュアル"],["email","メールテンプレート"],["insights","インサイト"]].forEach(function(item) {
+      var t = document.createElement("button"); t.className = "tab" + (S.tab === item[0] ? " active" : ""); t.textContent = item[1];
+      (function(id){ t.onclick = function() { setState({ tab: id }); }; })(item[0]);
+      tabs.appendChild(t);
+    });
+    var pdfBtn = document.createElement("button"); pdfBtn.className = "pdf-btn";
+    pdfBtn.textContent = S.pdfLoading ? "生成中..." : "↓ PDFで書き出す";
+    if (!S.pdfLoading) pdfBtn.onclick = exportPDF;
+    tb.appendChild(tabs); tb.appendChild(pdfBtn); app.appendChild(tb);
+
+    var content = document.createElement("div");
+    if (S.tab === "best") (r.best_practices||[]).forEach(function(b) {
+      var it = document.createElement("div"); it.className = "item"; it.style.borderLeft = "2px solid var(--green)";
+      var title = document.createElement("p"); title.className = "item-title"; title.textContent = b.title;
+      var desc = document.createElement("p"); desc.className = "item-desc"; desc.textContent = b.description;
+      it.appendChild(title); it.appendChild(desc);
+      if (b.evidence) { var ev = document.createElement("span"); ev.className = "badge bg"; ev.textContent = "根拠: " + b.evidence; it.appendChild(ev); }
+      content.appendChild(it);
+    });
+    if (S.tab === "ng") (r.ng_practices||[]).forEach(function(n) {
+      var it = document.createElement("div"); it.className = "item"; it.style.borderLeft = "2px solid var(--red)";
+      var title = document.createElement("p"); title.className = "item-title"; title.textContent = n.title;
+      var desc = document.createElement("p"); desc.className = "item-desc"; desc.textContent = n.description;
+      it.appendChild(title); it.appendChild(desc);
+      if (n.evidence) { var ev = document.createElement("span"); ev.className = "badge br"; ev.textContent = "根拠: " + n.evidence; it.appendChild(ev); }
+      if (n.risk) { var rp = document.createElement("p"); rp.className = "risk"; rp.textContent = "リスク: " + n.risk; it.appendChild(rp); }
+      content.appendChild(it);
+    });
+    if (S.tab === "manual") (r.manual_sections||[]).forEach(function(s, i) {
+      var it = document.createElement("div"); it.className = "item";
+      var title = document.createElement("p"); title.className = "item-title"; title.textContent = (i+1) + ". " + s.title;
+      var desc = document.createElement("p"); desc.className = "item-desc"; desc.textContent = s.content;
+      it.appendChild(title); it.appendChild(desc); content.appendChild(it);
+    });
+    if (S.tab === "email") (r.email_templates||[]).forEach(function(e) {
+      var it = document.createElement("div"); it.className = "item"; it.style.borderLeft = "2px solid var(--gold)";
+      var title = document.createElement("p"); title.className = "item-title"; title.textContent = e.title;
+      it.appendChild(title);
+      if (e.point) { var pt = document.createElement("p"); pt.style.cssText = "font-size:12px;color:#185FA5;margin-bottom:8px"; pt.textContent = "💡 " + e.point; it.appendChild(pt); }
+      var subj = document.createElement("div"); subj.style.cssText = "background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px";
+      var subjLabel = document.createElement("p"); subjLabel.style.cssText = "font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase"; subjLabel.textContent = "件名";
+      var subjText = document.createElement("p"); subjText.style.cssText = "font-size:13px;font-weight:500;color:var(--text)"; subjText.textContent = e.subject;
+      subj.appendChild(subjLabel); subj.appendChild(subjText); it.appendChild(subj);
+      var body = document.createElement("div"); body.style.cssText = "background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px";
+      var bodyLabel = document.createElement("p"); bodyLabel.style.cssText = "font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase"; bodyLabel.textContent = "本文";
+      var bodyText = document.createElement("p"); bodyText.style.cssText = "font-size:12px;line-height:1.9;white-space:pre-wrap;color:var(--text2)"; bodyText.textContent = e.body;
+      body.appendChild(bodyLabel); body.appendChild(bodyText); it.appendChild(body);
+      content.appendChild(it);
+    });
+    
+    if (S.tab === "insights") {
+      var ic = document.createElement("div"); ic.className = "summary-card";
+      var il = document.createElement("p"); il.className = "card-label"; il.textContent = "組織改善インサイト";
+      var it2 = document.createElement("p"); it2.className = "summary-text"; it2.textContent = r.insights;
+      ic.appendChild(il); ic.appendChild(it2); content.appendChild(ic);
+    }
+    app.appendChild(content);
+
+    // ─── STEP 3: 自分のドキュメント比較 ─────────────
+    var div = document.createElement("div"); div.style.cssText = "margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)";
+    var s3title = document.createElement("p"); s3title.style.cssText = "font-size:12px;font-weight:700;color:var(--accent2);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px"; s3title.textContent = "Step 3 — 自分のドキュメントと比較分析";
+    var s3sub = document.createElement("p"); s3sub.style.cssText = "font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.6"; s3sub.textContent = "自分のメールや提案書をアップロードして、上位者のパターンと比較分析します。";
+    div.appendChild(s3title); div.appendChild(s3sub);
+
+    // File upload for my docs
+    var myInput = document.createElement("input"); myInput.type = "file"; myInput.accept = ".txt,.md,.csv,.xlsx,.xls"; myInput.multiple = true; myInput.style.display = "none"; myInput.id = "myInput";
+    myInput.addEventListener("change", async function(e) {
+      var nf = await Promise.all(Array.from(e.target.files).map(async function(f) {
+        var c = /\.xlsx?$/i.test(f.name) ? await readExcel(f) : await readFile(f);
+        return { name: f.name, size: f.size, content: c };
+      }));
+      var ex = S.myDocs.map(function(f){ return f.name; });
+      setState({ myDocs: S.myDocs.concat(nf.filter(function(f){ return !ex.includes(f.name); })), myRes: null });
+      e.target.value = "";
+    });
+
+    var myDz = document.createElement("div"); myDz.className = "dz"; myDz.style.marginBottom = "10px";
+    myDz.innerHTML = '<div class="dz-icon">📝</div><div class="dz-title">自分のメール・提案書をアップロード</div><div class="dz-sub">.txt / .xlsx / .csv 対応</div>';
+    myDz.appendChild(myInput); myDz.onclick = function() { myInput.click(); }; div.appendChild(myDz);
+
+    if (S.myDocs.length > 0) {
+      var myList = document.createElement("div"); myList.className = "file-list";
+      S.myDocs.forEach(function(f) {
+        var row = document.createElement("div"); row.className = "file-row";
+        var sp = document.createElement("span"); sp.textContent = "📝 " + f.name;
+        var rm = document.createElement("button"); rm.className = "file-rm"; rm.textContent = "×";
+        rm.onclick = function() { setState({ myDocs: S.myDocs.filter(function(d){ return d.name !== f.name; }), myRes: null }); };
+        row.appendChild(sp); row.appendChild(rm); myList.appendChild(row);
+      });
+      div.appendChild(myList);
+    }
+
+    var canStep3 = S.myDocs.length > 0 && !S.myAnalyzing;
+    var s3btn = document.createElement("button"); s3btn.className = "btn " + (canStep3 ? "primary" : "disabled");
+    s3btn.style.background = canStep3 ? "linear-gradient(135deg, var(--gold), #d97706)" : "";
+    s3btn.style.boxShadow = canStep3 ? "0 4px 20px rgba(245,158,11,0.3)" : "";
+    s3btn.textContent = S.myAnalyzing ? "上位者パターンと比較中..." : "上位者と比較分析する" + (S.myDocs.length > 0 ? " (" + S.myDocs.length + "件)" : "");
+    if (canStep3) s3btn.onclick = runStep3;
+    div.appendChild(s3btn);
+
+    // Comparison results
+    if (S.myRes) {
+      var mr = S.myRes;
+      // Score card
+      var scoreCard = document.createElement("div"); scoreCard.style.cssText = "background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:12px;display:flex;align-items:center;gap:2rem";
+      var scoreCircle = document.createElement("div"); scoreCircle.style.cssText = "flex-shrink:0;width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;border:3px solid " + (mr.overall_score >= 70 ? "var(--teal)" : mr.overall_score >= 50 ? "var(--gold)" : "var(--red)");
+      var scoreNum = document.createElement("span"); scoreNum.style.cssText = "font-size:26px;font-weight:700;color:" + (mr.overall_score >= 70 ? "var(--teal2)" : mr.overall_score >= 50 ? "var(--gold)" : "var(--red2)"); scoreNum.textContent = mr.overall_score;
+      var scoreLabel = document.createElement("span"); scoreLabel.style.cssText = "font-size:10px;color:var(--text3)"; scoreLabel.textContent = "/ 100";
+      scoreCircle.appendChild(scoreNum); scoreCircle.appendChild(scoreLabel);
+      var scoreSummary = document.createElement("div");
+      var scoreTitle = document.createElement("p"); scoreTitle.style.cssText = "font-size:11px;color:var(--text3);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px"; scoreTitle.textContent = "総合評価";
+      var scoreText = document.createElement("p"); scoreText.style.cssText = "font-size:13px;color:var(--text2);line-height:1.7"; scoreText.textContent = mr.summary;
+      scoreSummary.appendChild(scoreTitle); scoreSummary.appendChild(scoreText);
+      scoreCard.appendChild(scoreCircle); scoreCard.appendChild(scoreSummary); div.appendChild(scoreCard);
+
+      // Strengths
+      if (mr.strengths && mr.strengths.length > 0) {
+        var stTitle = document.createElement("p"); stTitle.style.cssText = "font-size:11px;font-weight:700;color:var(--green2);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px"; stTitle.textContent = "✓ 良い点";
+        div.appendChild(stTitle);
+        mr.strengths.forEach(function(s) {
+          var it = document.createElement("div"); it.className = "item"; it.style.borderLeft = "2px solid var(--green)";
+          var t = document.createElement("p"); t.className = "item-title"; t.textContent = s.title;
+          var d = document.createElement("p"); d.className = "item-desc"; d.textContent = s.description;
+          it.appendChild(t); it.appendChild(d); div.appendChild(it);
+        });
+      }
+
+      // Improvements
+      if (mr.improvements && mr.improvements.length > 0) {
+        var imTitle = document.createElement("p"); imTitle.style.cssText = "font-size:11px;font-weight:700;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin:16px 0 8px"; imTitle.textContent = "△ 改善点";
+        div.appendChild(imTitle);
+        mr.improvements.forEach(function(im) {
+          var it = document.createElement("div"); it.className = "item"; it.style.borderLeft = "2px solid var(--gold)";
+          var t = document.createElement("p"); t.className = "item-title"; t.textContent = im.title;
+          var d = document.createElement("p"); d.className = "item-desc"; d.textContent = im.description;
+          it.appendChild(t); it.appendChild(d);
+          if (im.example) {
+            var ex = document.createElement("div"); ex.style.cssText = "background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:8px";
+            var exLabel = document.createElement("p"); exLabel.style.cssText = "font-size:10px;color:var(--accent2);font-weight:700;letter-spacing:0.06em;margin-bottom:4px"; exLabel.textContent = "改善例";
+            var exText = document.createElement("p"); exText.style.cssText = "font-size:12px;color:var(--text2);line-height:1.7"; exText.textContent = im.example;
+            ex.appendChild(exLabel); ex.appendChild(exText); it.appendChild(ex);
+          }
+          div.appendChild(it);
+        });
+      }
+
+      // Rewritten version
+      if (mr.rewritten) {
+        var rwTitle = document.createElement("p"); rwTitle.style.cssText = "font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:0.06em;text-transform:uppercase;margin:16px 0 8px"; rwTitle.textContent = "✦ 上位者パターンで書き直した改善版";
+        div.appendChild(rwTitle);
+        var rw = document.createElement("div"); rw.className = "item"; rw.style.borderLeft = "2px solid var(--accent)";
+        var rwt = document.createElement("p"); rwt.className = "item-title"; rwt.textContent = mr.rewritten.title;
+        var rwc = document.createElement("p"); rwc.style.cssText = "font-size:13px;color:var(--text2);line-height:1.9;white-space:pre-wrap"; rwc.textContent = mr.rewritten.content;
+        rw.appendChild(rwt); rw.appendChild(rwc); div.appendChild(rw);
+      }
+    }
+
+    app.appendChild(div);
+  }
+}
+
+render();
+
+// ── MODULE 2 ──────────────────────────────────────
+const API_KEY_STORAGE = "ai_mentor_api_key";
+
+const P_LEARN = `あなたはファイル管理の専門家です。提供されたファイル一覧とフォルダ構造を分析し、この会社の分類ルールを学習してください。JSONのみ返してください。形式:{"categories":[{"name":"カテゴリ名","description":"どんなファイルが含まれるか","keywords":["キーワード1","キーワード2"],"examples":["ファイル例1"]}],"rules":"この会社の分類ルールの要約（2-3文）"}`;
+
+const P_CLASSIFY = `あなたはファイル管理の専門家です。【学習済み分類ルール】を参照し、【新しいファイル一覧】を分類してください。JSONのみ返してください。形式:{"classified":[{"filename":"ファイル名","category":"カテゴリ名","confidence":85,"reason":"分類理由","elements":["要素1（例：顧客名: ABC商事）","要素2（例：種別: 提案書）","要素3（例：金額: 150万円）","要素4（例：担当: 田中）"]}],"uncategorized":[{"filename":"ファイル名","reason":"分類できない理由","suggested_category":"新カテゴリ案","elements":["要素1","要素2"]}]}`;
+
+const P_SEARCH = `あなたは社内ナレッジ検索の専門家です。【インデックス済みファイル一覧】から【検索クエリ】に最も関連するファイルを検索してください。JSONのみ返してください。形式:{"results":[{"filename":"ファイル名","category":"カテゴリ","similarity_score":92,"reason":"関連する理由","key_points":"このファイルから得られる情報"}],"search_summary":"検索結果のサマリー"}`;
+
+var M2 = {
+  apiKey: localStorage.getItem(API_KEY_STORAGE) || "",
+  showApiSetup: !localStorage.getItem(API_KEY_STORAGE),
+  tab: "classify",
+  // Step 1: 既存ファイル学習
+  existingFiles: [], learning: false, learnResult: null,
+  // Step 2: 新規ファイル分類
+  newFiles: [], classifying: false, classifyResult: null,
+  // Step 3: 検索
+  searchQuery: "", searching: false, searchResult: null,
+  searchIndex: [],
+  err: ""
+};
+
+function m2set(p) { Object.assign(M2, p); m2render(); }
+
+function m2rf(f) {
+  return new Promise(function(r) { var x = new FileReader(); x.onload = function(e) { r(e.target.result); }; x.readAsText(f, "UTF-8"); });
+}
+
+function m2saveKey(key) {
+  localStorage.setItem(API_KEY_STORAGE, key);
+  m2set({ apiKey: key, showApiSetup: false, err: "" });
+}
+
+async function m2api(system, userMsg) {
+  var apiKey = M2.apiKey || localStorage.getItem(API_KEY_STORAGE);
+  if (!apiKey) { m2set({ showApiSetup: true }); throw new Error("APIキーが設定されていません"); }
+  var res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 4000, system: system, messages: [{ role: "user", content: userMsg }] })
+  });
+  var data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  var txt = data.content.map(function(b){ return b.text || ""; }).join("");
+  var m = txt.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("JSONが見つかりません");
+  return JSON.parse(m[0]);
+}
+
+async function m2addFiles(fileList, target) {
+  var arr = Array.from(fileList).filter(function(f){ return !f.name.startsWith("."); });
+  var results = await Promise.all(arr.map(async function(f) {
+    var content = "";
+    try { content = await m2rf(f); } catch(e) {}
+    return { name: f.name, size: f.size, path: f.webkitRelativePath || f.name, content: content.slice(0, 500) };
+  }));
+  var existing = M2[target].map(function(f){ return f.path || f.name; });
+  var unique = results.filter(function(f){ return !existing.includes(f.path || f.name); });
+  var patch = {}; patch[target] = M2[target].concat(unique);
+  m2set(patch);
+}
+
+async function m2learn() {
+  if (!M2.existingFiles.length || M2.learning) return;
+  m2set({ learning: true, err: "", learnResult: null });
+  try {
+    var fileList = M2.existingFiles.map(function(f){ return "パス: " + f.path + "\nファイル名: " + f.name + (f.content ? "\n内容の一部: " + f.content : ""); }).join("\n\n---\n\n");
+    var result = await m2api(P_LEARN, "以下のファイル一覧からこの会社の分類ルールを学習してください:\n\n" + fileList);
+    m2set({ learnResult: result, learning: false, searchIndex: M2.existingFiles });
+  } catch(e) {
+    m2set({ err: "学習に失敗しました: " + e.message, learning: false });
+  }
+}
+
+async function m2classify() {
+  if (!M2.newFiles.length || M2.classifying || !M2.learnResult) return;
+  m2set({ classifying: true, err: "", classifyResult: null });
+  try {
+    var rules = JSON.stringify(M2.learnResult);
+    var newList = M2.newFiles.map(function(f){ return "ファイル名: " + f.name + (f.content ? "\n内容の一部: " + f.content : ""); }).join("\n\n---\n\n");
+    var result = await m2api(P_CLASSIFY, "【学習済み分類ルール】\n" + rules + "\n\n【新しいファイル一覧】\n" + newList);
+    m2set({ classifyResult: result, classifying: false });
+  } catch(e) {
+    m2set({ err: "分類に失敗しました: " + e.message, classifying: false });
+  }
+}
+
+async function m2search() {
+  var q = document.getElementById("m2searchQ");
+  if (!q || !q.value.trim() || M2.searching || !M2.learnResult) return;
+  m2set({ searching: true, err: "", searchResult: null, searchQuery: q.value.trim() });
+  try {
+    var index = M2.existingFiles.concat(M2.newFiles).map(function(f){ return "カテゴリ: " + (m2getCat(f.name) || "未分類") + "\nファイル名: " + f.name + (f.content ? "\n内容: " + f.content : ""); }).join("\n\n---\n\n");
+    var result = await m2api(P_SEARCH, "【インデックス済みファイル一覧】\n" + index + "\n\n【検索クエリ】\n" + M2.searchQuery);
+    m2set({ searching: false, searchResult: result });
+  } catch(e) {
+    m2set({ err: "検索に失敗しました: " + e.message, searching: false });
+  }
+}
+
+function m2getCat(filename) {
+  if (!M2.classifyResult) return null;
+  var found = (M2.classifyResult.classified || []).find(function(c){ return c.filename === filename; });
+  return found ? found.category : null;
+}
+
+function m2assign(filename, category) {
+  if (!M2.classifyResult) return;
+  var uc = M2.classifyResult.uncategorized.filter(function(f){ return f.filename !== filename; });
+  var cl = M2.classifyResult.classified.concat([{ filename: filename, category: category, confidence: 100, reason: "手動で割り当て" }]);
+  m2set({ classifyResult: Object.assign({}, M2.classifyResult, { classified: cl, uncategorized: uc }) });
+}
+
+function m2render() {
+  var app = document.getElementById("app2");
+  app.innerHTML = "";
+
+  // オンボーディング
+  if (M2.showApiSetup) {
+    var ob = document.createElement("div"); ob.style.cssText = "max-width:480px;margin:4rem auto;text-align:center";
+    ob.innerHTML = '<div style="font-size:48px;margin-bottom:1.5rem">🔑</div><h2 style="font-size:22px;font-weight:700;margin-bottom:8px">APIキーを設定してください</h2><p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:2rem">Anthropic APIキーが必要です。キーはブラウザ内にのみ保存されます。</p>';
+    var link = document.createElement("a"); link.href = "https://console.anthropic.com"; link.target = "_blank"; link.style.cssText = "display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--accent2);text-decoration:none;margin-bottom:1.5rem;padding:8px 16px;border:1px solid rgba(99,102,241,0.2);border-radius:8px;background:rgba(99,102,241,0.06)"; link.textContent = "↗ console.anthropic.com でAPIキーを取得";
+    var inp = document.createElement("input"); inp.type = "password"; inp.placeholder = "sk-ant-api03-..."; inp.id = "m2apiKeyInput"; inp.style.cssText = "width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;margin-bottom:10px;outline:none";
+    var btn = document.createElement("button"); btn.className = "btn primary"; btn.style.marginBottom = "0"; btn.textContent = "設定して始める";
+    btn.onclick = function() { var k = document.getElementById("m2apiKeyInput").value.trim(); if (!k || k.length < 10) { m2set({ err: "APIキーを入力してください" }); return; } m2saveKey(k); };
+    ob.appendChild(link); ob.appendChild(inp); ob.appendChild(btn);
+    if (M2.err) { var em = document.createElement("p"); em.style.cssText = "font-size:12px;color:var(--red2);margin-top:8px"; em.textContent = M2.err; ob.appendChild(em); }
+    app.appendChild(ob); return;
+  }
+
+  // APIキー変更ボタン
+  var hd = document.createElement("div"); hd.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:1.5rem";
+  var rb = document.createElement("button"); rb.style.cssText = "background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text3);font-family:inherit"; rb.textContent = "🔑 APIキー変更"; rb.onclick = function() { m2set({ showApiSetup: true }); };
+  hd.appendChild(rb); app.appendChild(hd);
+
+  // エラー
+  if (M2.err) { var eb = document.createElement("div"); eb.className = "err"; eb.textContent = M2.err; app.appendChild(eb); }
+
+  // ステップバー
+  var s1done = !!M2.learnResult, s2done = !!M2.classifyResult;
+  var sb = document.createElement("div"); sb.className = "step-bar";
+  function mkC(n, done, active) { var c = document.createElement("div"); c.className = "sc " + (done?"done":active?"active":"idle"); c.textContent = done?"✓":String(n); return c; }
+  function mkL(t, active, done) { var l = document.createElement("span"); l.className = "sl" + (active?" active":"") + (done?" done":""); l.textContent = t; return l; }
+  sb.appendChild(mkC(1,s1done,!s1done)); sb.appendChild(mkL("既存ファイル学習",!s1done,s1done));
+  var ln1 = document.createElement("div"); ln1.className = "step-line"; sb.appendChild(ln1);
+  sb.appendChild(mkC(2,s2done,s1done&&!s2done)); sb.appendChild(mkL("新規ファイル分類",s1done&&!s2done,s2done));
+  var ln2 = document.createElement("div"); ln2.className = "step-line"; sb.appendChild(ln2);
+  sb.appendChild(mkC(3,false,s2done)); sb.appendChild(mkL("類似検索",s2done,false));
+  app.appendChild(sb);
+
+  // ─── STEP 1 ───
+  var s1title = document.createElement("p"); s1title.className = "sec-title"; s1title.textContent = "Step 1 — 既存ファイルをアップロードして分類ルールを学習"; app.appendChild(s1title);
+  var s1sub = document.createElement("p"); s1sub.className = "sec-sub"; s1sub.textContent = "現在整理済みのフォルダをアップロードしてください。AIがフォルダ構造を読み取り、この会社固有の分類ルールを学習します。"; app.appendChild(s1sub);
+
+  if (!M2.learnResult) {
+    var fi1 = document.createElement("input"); fi1.type = "file"; fi1.style.display = "none"; fi1.id = "m2fi1"; fi1.multiple = true;
+    fi1.setAttribute("webkitdirectory",""); fi1.setAttribute("directory","");
+    fi1.onchange = async function(e) { await m2addFiles(e.target.files, "existingFiles"); e.target.value = ""; };
+    var fi1b = document.createElement("input"); fi1b.type = "file"; fi1b.style.display = "none"; fi1b.id = "m2fi1b"; fi1b.multiple = true; fi1b.accept = ".txt,.md,.csv,.xlsx,.xls,.docx,.pdf";
+    fi1b.onchange = async function(e) { await m2addFiles(e.target.files, "existingFiles"); e.target.value = ""; };
+
+    var ug1 = document.createElement("div"); ug1.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px";
+    var opt1 = document.createElement("div"); opt1.className = "dz"; opt1.style.padding = "1.25rem";
+    opt1.innerHTML = '<div class="dz-icon">📁</div><div class="dz-title">フォルダを丸ごとアップロード</div><div class="dz-sub">既存の整理済みフォルダ</div>';
+    opt1.appendChild(fi1); opt1.onclick = function() { fi1.click(); };
+    var opt2 = document.createElement("div"); opt2.className = "dz"; opt2.style.padding = "1.25rem";
+    opt2.innerHTML = '<div class="dz-icon">📄</div><div class="dz-title">ファイルを選択</div><div class="dz-sub">.txt / .csv / .xlsx など</div>';
+    opt2.appendChild(fi1b); opt2.onclick = function() { fi1b.click(); };
+    ug1.appendChild(opt1); ug1.appendChild(opt2); app.appendChild(ug1);
+
+    if (M2.existingFiles.length > 0) {
+      var sumBar = document.createElement("div"); sumBar.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px";
+      var cb = document.createElement("span"); cb.className = "badge bo"; cb.textContent = M2.existingFiles.length + "件のファイル";
+      var clr = document.createElement("button"); clr.style.cssText = "margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3)"; clr.textContent = "すべて削除"; clr.onclick = function() { m2set({ existingFiles: [], learnResult: null }); };
+      sumBar.appendChild(cb); sumBar.appendChild(clr); app.appendChild(sumBar);
+      var fl = document.createElement("div"); fl.className = "file-list";
+      M2.existingFiles.slice(0,6).forEach(function(f) {
+        var row = document.createElement("div"); row.className = "file-row";
+        var sp = document.createElement("span"); sp.textContent = "📄 " + (f.path && f.path !== f.name ? f.path : f.name); sp.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-size:12px";
+        var rm = document.createElement("button"); rm.className = "file-rm"; rm.textContent = "×"; rm.onclick = function() { m2set({ existingFiles: M2.existingFiles.filter(function(d){ return d.name !== f.name; }) }); };
+        row.appendChild(sp); row.appendChild(rm); fl.appendChild(row);
+      });
+      if (M2.existingFiles.length > 6) { var more = document.createElement("p"); more.style.cssText = "font-size:12px;color:var(--text3);padding:4px 12px"; more.textContent = "...他 " + (M2.existingFiles.length-6) + " 件"; fl.appendChild(more); }
+      app.appendChild(fl);
+    }
+
+    var b1 = document.createElement("button"); b1.className = "btn " + (M2.existingFiles.length>0&&!M2.learning?"primary":"disabled");
+    b1.textContent = M2.learning ? "分類ルールを学習中..." : "AIが分類ルールを学習する（" + M2.existingFiles.length + "件）";
+    if (M2.existingFiles.length>0&&!M2.learning) b1.onclick = m2learn;
+    app.appendChild(b1);
+
+  } else {
+    // 学習完了カード
+    var lr = M2.learnResult;
+    var lc = document.createElement("div"); lc.className = "card";
+    var lhead = document.createElement("div"); lhead.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:12px";
+    var llbl = document.createElement("p"); llbl.className = "card-label"; llbl.style.marginBottom = "0"; llbl.textContent = "学習済み分類ルール";
+    var lbadge = document.createElement("span"); lbadge.className = "badge bg"; lbadge.textContent = (lr.categories||[]).length + "カテゴリ";
+    var lreset = document.createElement("button"); lreset.className = "btn disabled"; lreset.style.cssText = "width:auto;padding:2px 10px;font-size:11px;margin:0;border-radius:6px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--text3)"; lreset.textContent = "やり直す"; lreset.onclick = function() { m2set({ learnResult:null, existingFiles:[], classifyResult:null, newFiles:[] }); };
+    lhead.appendChild(llbl); lhead.appendChild(lbadge); lhead.appendChild(lreset); lc.appendChild(lhead);
+    var lrules = document.createElement("p"); lrules.style.cssText = "font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px"; lrules.textContent = lr.rules || "";
+    lc.appendChild(lrules);
+    var catGrid = document.createElement("div"); catGrid.style.cssText = "display:flex;flex-wrap:wrap;gap:6px";
+    (lr.categories||[]).forEach(function(cat) {
+      var tag = document.createElement("span"); tag.className = "badge bo"; tag.textContent = cat.name; catGrid.appendChild(tag);
+    });
+    lc.appendChild(catGrid); app.appendChild(lc);
+
+    // STEP 2
+    var s2title = document.createElement("p"); s2title.className = "sec-title"; s2title.style.marginTop = "1.5rem"; s2title.textContent = "Step 2 — 新しいファイルを自動分類"; app.appendChild(s2title);
+    var s2sub = document.createElement("p"); s2sub.className = "sec-sub"; s2sub.textContent = "分類したいファイルをアップロードしてください。学習した分類ルールに従い自動で振り分けます。"; app.appendChild(s2sub);
+
+    if (!M2.classifyResult) {
+      var fi2 = document.createElement("input"); fi2.type = "file"; fi2.style.display = "none"; fi2.id = "m2fi2"; fi2.multiple = true; fi2.accept = ".txt,.md,.csv,.xlsx,.xls,.docx,.pdf";
+      fi2.onchange = async function(e) { await m2addFiles(e.target.files, "newFiles"); e.target.value = ""; };
+      var fi2b = document.createElement("input"); fi2b.type = "file"; fi2b.style.display = "none"; fi2b.id = "m2fi2b"; fi2b.multiple = true;
+      fi2b.setAttribute("webkitdirectory",""); fi2b.setAttribute("directory","");
+      fi2b.onchange = async function(e) { await m2addFiles(e.target.files, "newFiles"); e.target.value = ""; };
+
+      var ug2 = document.createElement("div"); ug2.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px";
+      var opt3 = document.createElement("div"); opt3.className = "dz"; opt3.style.padding = "1.25rem";
+      opt3.innerHTML = '<div class="dz-icon">📄</div><div class="dz-title">ファイルを選択</div><div class="dz-sub">分類したいファイル</div>';
+      opt3.appendChild(fi2); opt3.onclick = function() { fi2.click(); };
+      var opt4 = document.createElement("div"); opt4.className = "dz"; opt4.style.padding = "1.25rem";
+      opt4.innerHTML = '<div class="dz-icon">📁</div><div class="dz-title">フォルダを選択</div><div class="dz-sub">未整理のフォルダ</div>';
+      opt4.appendChild(fi2b); opt4.onclick = function() { fi2b.click(); };
+      ug2.appendChild(opt3); ug2.appendChild(opt4); app.appendChild(ug2);
+
+      if (M2.newFiles.length > 0) {
+        var sb2 = document.createElement("div"); sb2.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px";
+        var nb = document.createElement("span"); nb.className = "badge bb"; nb.textContent = M2.newFiles.length + "件";
+        var nc = document.createElement("button"); nc.style.cssText = "margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3)"; nc.textContent = "すべて削除"; nc.onclick = function() { m2set({ newFiles: [] }); };
+        sb2.appendChild(nb); sb2.appendChild(nc); app.appendChild(sb2);
+        var fl2 = document.createElement("div"); fl2.className = "file-list";
+        M2.newFiles.slice(0,6).forEach(function(f) {
+          var row = document.createElement("div"); row.className = "file-row";
+          var sp = document.createElement("span"); sp.textContent = "📄 " + f.name; sp.style.cssText = "flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+          var rm = document.createElement("button"); rm.className = "file-rm"; rm.textContent = "×"; rm.onclick = function() { m2set({ newFiles: M2.newFiles.filter(function(d){ return d.name !== f.name; }) }); };
+          row.appendChild(sp); row.appendChild(rm); fl2.appendChild(row);
+        });
+        app.appendChild(fl2);
+      }
+
+      var b2 = document.createElement("button"); b2.className = "btn " + (M2.newFiles.length>0&&!M2.classifying?"primary":"disabled");
+      b2.textContent = M2.classifying ? "AIが分類中..." : "AIが自動分類する（" + M2.newFiles.length + "件）";
+      if (M2.newFiles.length>0&&!M2.classifying) b2.onclick = m2classify;
+      app.appendChild(b2);
+
+    } else {
+      // 分類結果表示
+      var cr = M2.classifyResult;
+      var totalFiles = (cr.classified||[]).length + (cr.uncategorized||[]).length;
+      var sg = document.createElement("div"); sg.className = "stats-grid";
+      [
+        ["分類済み", (cr.classified||[]).length, "var(--teal)"],
+        ["未分類", (cr.uncategorized||[]).length, "var(--red)"],
+        ["カテゴリ数", new Set((cr.classified||[]).map(function(c){ return c.category; })).size, "var(--orange)"],
+        ["精度（平均）", Math.round((cr.classified||[]).reduce(function(s,c){ return s+c.confidence; },0) / Math.max((cr.classified||[]).length,1)) + "%", "var(--accent2)"]
+      ].forEach(function(item) {
+        var st = document.createElement("div"); st.className = "stat";
+        var n = document.createElement("p"); n.className = "stat-n"; n.style.color = item[2]; n.textContent = String(item[1]);
+        var l = document.createElement("p"); l.className = "stat-l"; l.textContent = item[0];
+        st.appendChild(n); st.appendChild(l); sg.appendChild(st);
+      });
+      app.appendChild(sg);
+
+      // タブ
+      var tbr = document.createElement("div"); tbr.className = "tab-bar";
+      [["classified","分類済み"], ["uncat","未分類"], ["search","類似検索"]].forEach(function(t) {
+        var tb = document.createElement("button"); tb.className = "tab" + (M2.tab===t[0]?" active":""); tb.textContent = t[1];
+        tb.onclick = function() { m2set({ tab: t[0] }); }; tbr.appendChild(tb);
+      });
+      app.appendChild(tbr);
+
+      if (M2.tab === "classified") {
+        var fileList_ = document.createElement("div"); fileList_.style.cssText = "display:flex;flex-direction:column;gap:10px";
+        (cr.classified||[]).forEach(function(c) {
+          var fc = document.createElement("div"); fc.className = "card"; fc.style.cssText = "background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 18px;transition:border-color 0.2s";
+          // ヘッダー
+          var fh = document.createElement("div"); fh.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:10px";
+          var fn_ = document.createElement("span"); fn_.style.cssText = "font-size:14px;font-weight:600;color:var(--text)"; fn_.textContent = "📄 " + c.filename;
+          var fmeta = document.createElement("div"); fmeta.style.cssText = "display:flex;align-items:center;gap:8px;flex-shrink:0";
+          var fconf = document.createElement("span"); fconf.style.cssText = "font-size:11px;font-weight:700;color:" + (c.confidence>=80?"var(--teal2)":"var(--gold)"); fconf.textContent = c.confidence + "%";
+          var fcat = document.createElement("span"); fcat.className = "badge bo"; fcat.textContent = c.category;
+          fmeta.appendChild(fconf); fmeta.appendChild(fcat); fh.appendChild(fn_); fh.appendChild(fmeta); fc.appendChild(fh);
+          // 要素箇条書き
+          if (c.elements && c.elements.length > 0) {
+            var elList = document.createElement("div"); elList.style.cssText = "display:flex;flex-direction:column;gap:4px;margin-bottom:10px";
+            c.elements.forEach(function(el) {
+              var eli = document.createElement("div"); eli.style.cssText = "font-size:12px;color:var(--text2);padding:3px 10px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;gap:6px";
+              var dot = document.createElement("span"); dot.style.cssText = "width:4px;height:4px;border-radius:50%;background:var(--orange);flex-shrink:0"; eli.appendChild(dot);
+              eli.appendChild(document.createTextNode(el)); elList.appendChild(eli);
+            });
+            fc.appendChild(elList);
+          }
+          // 分類理由 + カテゴリ変更
+          var fr = document.createElement("div"); fr.style.cssText = "display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px";
+          var freason = document.createElement("span"); freason.style.cssText = "font-size:11px;color:var(--text3);flex:1"; freason.textContent = c.reason;
+          var factions = document.createElement("div"); factions.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;align-items:center";
+          var flbl = document.createElement("span"); flbl.style.cssText = "font-size:10px;color:var(--text3)"; flbl.textContent = "変更:";
+          factions.appendChild(flbl);
+          (M2.learnResult.categories||[]).filter(function(cat){ return cat.name !== c.category; }).forEach(function(cat) {
+            var ab = document.createElement("button"); ab.className = "assign-btn"; ab.textContent = cat.name;
+            ab.onclick = (function(fname, catname) { return function() {
+              var uc2 = M2.classifyResult.uncategorized || [];
+              var cl2 = M2.classifyResult.classified.map(function(x) { return x.filename === fname ? Object.assign({}, x, { category: catname, confidence: 100, reason: "手動変更" }) : x; });
+              m2set({ classifyResult: Object.assign({}, M2.classifyResult, { classified: cl2, uncategorized: uc2 }) });
+            }; })(c.filename, cat.name);
+            factions.appendChild(ab);
+          });
+          fr.appendChild(freason); fr.appendChild(factions); fc.appendChild(fr);
+          fileList_.appendChild(fc);
+        });
+        app.appendChild(fileList_);
+      }
+
+      if (M2.tab === "uncat") {
+        if ((cr.uncategorized||[]).length === 0) {
+          var noUncat = document.createElement("p"); noUncat.style.cssText = "text-align:center;color:var(--text3);font-size:13px;padding:2rem"; noUncat.textContent = "✓ すべてのファイルが分類されました";
+          app.appendChild(noUncat);
+        } else {
+          var ul = document.createElement("div"); ul.style.cssText = "display:flex;flex-direction:column;gap:10px";
+          (cr.uncategorized||[]).forEach(function(f) {
+            var ui = document.createElement("div"); ui.className = "uncat-item";
+            var uh = document.createElement("div"); uh.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:8px";
+            var un = document.createElement("p"); un.className = "uncat-name"; un.style.marginBottom = "0"; un.textContent = "📄 " + f.filename;
+            var ubadge = document.createElement("span"); ubadge.className = "badge br"; ubadge.textContent = "未分類";
+            uh.appendChild(un); uh.appendChild(ubadge); ui.appendChild(uh);
+            // 要素箇条書き
+            if (f.elements && f.elements.length > 0) {
+              var elList2 = document.createElement("div"); elList2.style.cssText = "display:flex;flex-direction:column;gap:4px;margin-bottom:8px";
+              f.elements.forEach(function(el) {
+                var eli = document.createElement("div"); eli.style.cssText = "font-size:12px;color:var(--text2);padding:3px 10px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;gap:6px";
+                var dot = document.createElement("span"); dot.style.cssText = "width:4px;height:4px;border-radius:50%;background:var(--red2);flex-shrink:0"; eli.appendChild(dot);
+                eli.appendChild(document.createTextNode(el)); elList2.appendChild(eli);
+              });
+              ui.appendChild(elList2);
+            }
+            var ur = document.createElement("p"); ur.className = "uncat-suggest"; ur.textContent = f.reason; ui.appendChild(ur);
+            var ua = document.createElement("div"); ua.className = "uncat-actions";
+            var sugLabel = document.createElement("span"); sugLabel.style.cssText = "font-size:11px;color:var(--text3);margin-right:4px;align-self:center"; sugLabel.textContent = "振り分け:";
+            ua.appendChild(sugLabel);
+            // 既存カテゴリボタン
+            (M2.learnResult.categories||[]).forEach(function(cat) {
+              var ab = document.createElement("button"); ab.className = "assign-btn" + (cat.name === f.suggested_category ? " suggested" : "");
+              ab.textContent = cat.name; ab.onclick = function() { m2assign(f.filename, cat.name); }; ua.appendChild(ab);
+            });
+            if (f.suggested_category) {
+              var newCat = document.createElement("button"); newCat.className = "assign-btn suggested"; newCat.textContent = "+ " + f.suggested_category;
+              newCat.onclick = function() { m2assign(f.filename, f.suggested_category); }; ua.appendChild(newCat);
+            }
+            ui.appendChild(ua); ul.appendChild(ui);
+          });
+          app.appendChild(ul);
+        }
+      }
+
+      if (M2.tab === "search") {
+        var sq = document.createElement("div"); sq.className = "search-bar";
+        var si = document.createElement("input"); si.type = "text"; si.className = "search-input"; si.placeholder = "例：営業提案書、顧客クレーム対応、システム導入事例..."; si.id = "m2searchQ"; si.value = M2.searchQuery || "";
+        si.onkeydown = function(e) { if (e.key === "Enter") m2search(); };
+        var sb3 = document.createElement("button"); sb3.className = "search-btn"; sb3.textContent = M2.searching ? "検索中..." : "🔍 検索"; sb3.onclick = m2search;
+        sq.appendChild(si); sq.appendChild(sb3); app.appendChild(sq);
+
+        if (M2.searchResult) {
+          var ss = document.createElement("p"); ss.style.cssText = "font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:1rem;padding:12px 16px;background:var(--bg2);border-radius:10px;border:1px solid var(--border)"; ss.textContent = M2.searchResult.search_summary;
+          app.appendChild(ss);
+          (M2.searchResult.results||[]).forEach(function(r) {
+            var sc = document.createElement("div"); sc.className = "similar-card";
+            var sh = document.createElement("div"); sh.className = "similar-header";
+            var sn = document.createElement("span"); sn.className = "similar-name"; sn.textContent = "📄 " + r.filename;
+            var ss2 = document.createElement("span"); ss2.className = "similar-score"; ss2.textContent = r.similarity_score + "% 一致";
+            sh.appendChild(sn); sh.appendChild(ss2); sc.appendChild(sh);
+            var scat = document.createElement("p"); scat.className = "similar-category"; scat.textContent = "カテゴリ: " + r.category;
+            var sreason = document.createElement("p"); sreason.className = "similar-reason"; sreason.textContent = r.reason;
+            if (r.key_points) {
+              var skp = document.createElement("p"); skp.style.cssText = "font-size:12px;color:var(--orange);margin-top:6px"; skp.textContent = "💡 " + r.key_points; sc.appendChild(skp);
+            }
+            sc.appendChild(scat); sc.appendChild(sreason); app.appendChild(sc);
+          });
+        }
+      }
+
+      // やり直しボタン
+      var resetBtn = document.createElement("button"); resetBtn.style.cssText = "background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--text3);font-family:inherit;margin-top:1rem"; resetBtn.textContent = "← 分類をやり直す"; resetBtn.onclick = function() { m2set({ classifyResult:null, newFiles:[] }); };
+      app.appendChild(resetBtn);
+    }
+  }
+}
+
+m2render();
+
+// ── INIT ──────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
